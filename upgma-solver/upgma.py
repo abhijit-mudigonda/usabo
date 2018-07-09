@@ -49,14 +49,12 @@ class UPGMA:
                 is a list of labels
         """
 
-        #TODO headers don't line up with columns rn
-        #TODO newlines at the end of each append
-
+        out = open(output_file, 'a')
         names = UPGMA.clusterFromListOfLists(clusters)
-        pd.options.display.float_format = '{:,.2f}'.format
         df = pd.DataFrame(diffs, index=names, columns=names)
-        print(df)
-        df.to_csv(output_file, mode = 'a', sep = ' ')
+        pd.options.display.float_format = '{:,.2f}'.format
+        out.write(df.to_string()+'\n'*2)
+        print("Intermediate Matrix: \n", df, '\n')
         
     def upgmaStep(diffs: Any, clusters: List[Any]) -> Any:
         """
@@ -94,6 +92,7 @@ class UPGMA:
         """
 
         diffs = UPGMA.diffMatrixBuilder(traits)
+        print("Difference Matrix: \n", diffs, '\n')
         clusters = [[thing] for thing in objects]
         assert(diffs.shape[0] == diffs.shape[1])
         assert(len(clusters) == diffs.shape[0])
@@ -102,7 +101,7 @@ class UPGMA:
         if output_file is not None:
             UPGMA.outputMatrix(output_file, diffs, clusters)
 
-        while(len(clusters) > 1):
+        while(len(clusters) > 2):
             diffs, clusters = UPGMA.upgmaStep(diffs, clusters)
             UPGMA.outputMatrix(output_file, diffs, clusters)
 
@@ -110,12 +109,19 @@ class UPGMA:
 
 
 if __name__ == "__main__":
+    """
+        This is what's run when you run python upgma.py. It takes the traitmatrix
+        from "traitmatrix.txt", assigns A, B, C, ... to each of the objects on which
+        UPGMA is being done, and constructs a tree based on the UPGMA. It also writes the 
+        difference matrices to console and to the file out.txt
+    """
+    #TODO let user use other trait files and other outputs (so take those files as input)
     traits = np.loadtxt("traitmatrix.txt")
     objects = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ"[:traits.shape[0]])
-    open("out.csv",'w').close()
+    open("out.txt",'w').close()
 
-    newick = UPGMA.upgma(traits, objects, "out.csv")
-    print(newick)
+    newick = UPGMA.upgma(traits, objects, "out.txt")
+    print("The constructed tree, in Newick form, is: \n", newick)
     tree = Tree(newick+";")
     tree.show()
     
